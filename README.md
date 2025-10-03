@@ -65,6 +65,19 @@ You can retrieve the configuration with:
 api-cli run get-configuration --agent module/agentzeroai1
 ```
 
+## Update
+
+To update the module to a new version
+
+```bash
+api-cli run update-module --data '{
+  "module_url": "ghcr.io/geniusdynamics/agentzeroai:latest",
+  "instances": ["agentzeroai1"],
+  "force": true
+}'
+
+```
+
 ## Uninstall
 
 To uninstall the instance:
