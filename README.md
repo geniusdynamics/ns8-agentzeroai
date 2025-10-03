@@ -1,54 +1,44 @@
 # ns8-agentzeroai
 
-This is a template module for [NethServer 8](https://github.com/NethServer/ns8-core).
-To start a new module from it:
+A NethServer 8 module for integrating AgentZero AI, providing AI-powered automation and assistance within the NethServer ecosystem.
 
-1. Click on [Use this template](https://github.com/NethServer/ns8-agentzeroai/generate).
-   Name your repo with `ns8-` prefix (e.g. `ns8-mymodule`). 
-   Do not end your module name with a number, like ~~`ns8-baaad2`~~!
+## Description
 
-1. Clone the repository, enter the cloned directory and
-   [configure your GIT identity](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup#_your_identity)
+This module deploys AgentZero AI as a service in NethServer 8, allowing users to leverage AI capabilities for various tasks. It includes a web interface and backend services configured with Traefik for routing and SSL support.
 
-1. Rename some references inside the repo:
-   ```
-   modulename=$(basename $(pwd) | sed 's/^ns8-//') &&
-   git mv imageroot/systemd/user/agentzeroai.service imageroot/systemd/user/${modulename}.service &&
-   git mv imageroot/systemd/user/agentzeroai-app.service imageroot/systemd/user/${modulename}-app.service && 
-   git mv tests/agentzeroai.robot tests/${modulename}.robot &&
-   sed -i "s/agentzeroai/${modulename}/g" $(find .github/ * -type f) &&
-   git commit -a -m "Repository initialization"
-   ```
+## Features
 
-1. Edit this `README.md` file, by replacing this section with your module
-   description
+- AI-powered agent for automation and assistance
+- Web-based user interface
+- Database integration with MariaDB
+- Automatic SSL certificate management with Let's Encrypt
+- Smarthost configuration discovery
+- Multi-language support via Weblate
 
-1. Adjust `.github/workflows` to your needs. `clean-registry.yml` might
-   need the proper list of image names to work correctly. Unused workflows
-   can be disabled from the GitHub Actions interface.
+## Requirements
 
-1. Commit and push your local changes
+- NethServer 8 core system
+- Docker/Podman for containerization
+- Access to a domain for hosting
 
-## Install
+## Installation
 
 Instantiate the module with:
 
-    add-module ghcr.io/nethserver/agentzeroai:latest 1
+    add-module ghcr.io/geniusdynamics/agentzeroai:latest 1
 
 The output of the command will return the instance name.
 Output example:
 
-    {"module_id": "agentzeroai1", "image_name": "agentzeroai", "image_url": "ghcr.io/nethserver/agentzeroai:latest"}
+    {"module_id": "agentzeroai1", "image_name": "agentzeroai", "image_url": "ghcr.io/geniusdynamics/agentzeroai:latest"}
 
-## Configure
-
-Let's assume that the mattermost instance is named `agentzeroai1`.
+## Configuration
 
 Launch `configure-module`, by setting the following parameters:
+
 - `host`: a fully qualified domain name for the application
 - `http2https`: enable or disable HTTP to HTTPS redirection (true/false)
 - `lets_encrypt`: enable or disable Let's Encrypt certificate (true/false)
-
 
 Example:
 
@@ -63,11 +53,13 @@ EOF
 ```
 
 The above command will:
-- start and configure the agentzeroai instance
-- configure a virtual host for trafik to access the instance
 
-## Get the configuration
-You can retrieve the configuration with
+- start and configure the agentzeroai instance
+- configure a virtual host for Traefik to access the instance
+
+## Get the Configuration
+
+You can retrieve the configuration with:
 
 ```
 api-cli run get-configuration --agent module/agentzeroai1
@@ -79,93 +71,99 @@ To uninstall the instance:
 
     remove-module --no-preserve agentzeroai1
 
-## Smarthost setting discovery
+## Smarthost Setting Discovery
 
-Some configuration settings, like the smarthost setup, are not part of the
-`configure-module` action input: they are discovered by looking at some
-Redis keys.  To ensure the module is always up-to-date with the
-centralized [smarthost
-setup](https://nethserver.github.io/ns8-core/core/smarthost/) every time
-agentzeroai starts, the command `bin/discover-smarthost` runs and refreshes
-the `state/smarthost.env` file with fresh values from Redis.
+Some configuration settings, like the smarthost setup, are not part of the `configure-module` action input: they are discovered by looking at some Redis keys. To ensure the module is always up-to-date with the centralized [smarthost setup](https://nethserver.github.io/ns8-core/core/smarthost/) every time agentzeroai starts, the command `bin/discover-smarthost` runs and refreshes the `state/smarthost.env` file with fresh values from Redis.
 
-Furthermore if smarthost setup is changed when agentzeroai is already
-running, the event handler `events/smarthost-changed/10reload_services`
-restarts the main module service.
+Furthermore, if smarthost setup is changed when agentzeroai is already running, the event handler `events/smarthost-changed/10reload_services` restarts the main module service.
 
 See also the `systemd/user/agentzeroai.service` file.
 
-This setting discovery is just an example to understand how the module is
-expected to work: it can be rewritten or discarded completely.
+This setting discovery is just an example to understand how the module is expected to work: it can be rewritten or discarded completely.
 
 ## Debug
 
-some CLI are needed to debug
+Some CLI commands are needed to debug:
 
-- The module runs under an agent that initiate a lot of environment variables (in /home/agentzeroai1/.config/state), it could be nice to verify them
-on the root terminal
+- The module runs under an agent that initiates a lot of environment variables (in `/home/agentzeroai1/.config/state`). It could be nice to verify them on the root terminal:
 
-    `runagent -m agentzeroai1 env`
+  ```
+  runagent -m agentzeroai1 env
+  ```
 
-- you can become runagent for testing scripts and initiate all environment variables
-  
-    `runagent -m agentzeroai1`
+- You can become runagent for testing scripts and initiate all environment variables:
 
- the path become : 
-```
-    echo $PATH
-    /home/agentzeroai1/.config/bin:/usr/local/agent/pyenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/
-```
+  ```
+  runagent -m agentzeroai1
+  ```
 
-- if you want to debug a container or see environment inside
- `runagent -m agentzeroai1`
- ```
-podman ps
-CONTAINER ID  IMAGE                                      COMMAND               CREATED        STATUS        PORTS                    NAMES
-d292c6ff28e9  localhost/podman-pause:4.6.1-1702418000                          9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  80b8de25945f-infra
-d8df02bf6f4a  docker.io/library/mariadb:10.11.5          --character-set-s...  9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  mariadb-app
-9e58e5bd676f  docker.io/library/nginx:stable-alpine3.17  nginx -g daemon o...  9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  agentzeroai-app
-```
+  The path becomes:
 
-you can see what environment variable is inside the container
-```
-podman exec  agentzeroai-app env
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-TERM=xterm
-PKG_RELEASE=1
-MARIADB_DB_HOST=127.0.0.1
-MARIADB_DB_NAME=agentzeroai
-MARIADB_IMAGE=docker.io/mariadb:10.11.5
-MARIADB_DB_TYPE=mysql
-container=podman
-NGINX_VERSION=1.24.0
-NJS_VERSION=0.7.12
-MARIADB_DB_USER=agentzeroai
-MARIADB_DB_PASSWORD=agentzeroai
-MARIADB_DB_PORT=3306
-HOME=/root
-```
+  ```
+  echo $PATH
+  /home/agentzeroai1/.config/bin:/usr/local/agent/pyenv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/usr/
+  ```
 
-you can run a shell inside the container
+- If you want to debug a container or see environment inside:
 
-```
-podman exec -ti   agentzeroai-app sh
-/ # 
-```
+  ```
+  runagent -m agentzeroai1
+  podman ps
+  ```
+
+  Example output:
+
+  ```
+  CONTAINER ID  IMAGE                                      COMMAND               CREATED        STATUS        PORTS                    NAMES
+  d292c6ff28e9  localhost/podman-pause:4.6.1-1702418000                          9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  80b8de25945f-infra
+  d8df02bf6f4a  docker.io/library/mariadb:10.11.5          --character-set-s...  9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  mariadb-app
+  9e58e5bd676f  docker.io/library/nginx:stable-alpine3.17  nginx -g daemon o...  9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  agentzeroai-app
+  ```
+
+- You can see what environment variables are inside the container:
+
+  ```
+  podman exec agentzeroai-app env
+  ```
+
+  Example output:
+
+  ```
+  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+  TERM=xterm
+  PKG_RELEASE=1
+  MARIADB_DB_HOST=127.0.0.1
+  MARIADB_DB_NAME=agentzeroai
+  MARIADB_IMAGE=docker.io/mariadb:10.11.5
+  MARIADB_DB_TYPE=mysql
+  container=podman
+  NGINX_VERSION=1.24.0
+  NJS_VERSION=0.7.12
+  MARIADB_DB_USER=agentzeroai
+  MARIADB_DB_PASSWORD=agentzeroai
+  MARIADB_DB_PORT=3306
+  HOME=/root
+  ```
+
+- You can run a shell inside the container:
+
+  ```
+  podman exec -ti agentzeroai-app sh
+  ```
+
 ## Testing
 
 Test the module using the `test-module.sh` script:
 
+    ./test-module.sh <NODE_ADDR> ghcr.io/geniusdynamics/agentzeroai:latest
 
-    ./test-module.sh <NODE_ADDR> ghcr.io/nethserver/agentzeroai:latest
+The tests are made using [Robot Framework](https://robotframework.org/).
 
-The tests are made using [Robot Framework](https://robotframework.org/)
-
-## UI translation
+## UI Translation
 
 Translated with [Weblate](https://hosted.weblate.org/projects/ns8/).
 
-To setup the translation process:
+To set up the translation process:
 
-- add [GitHub Weblate app](https://docs.weblate.org/en/latest/admin/continuous.html#github-setup) to your repository
-- add your repository to [hosted.weblate.org]((https://hosted.weblate.org) or ask a NethServer developer to add it to ns8 Weblate project
+- Add [GitHub Weblate app](https://docs.weblate.org/en/latest/admin/continuous.html#github-setup) to your repository
+- Add your repository to [hosted.weblate.org](https://hosted.weblate.org) or ask a NethServer developer to add it to the ns8 Weblate project
