@@ -1,19 +1,19 @@
 {
-  "name": "agentzeroai",
-  "description": {
-    "en": "My agentzeroai module"
-  },
-  "categories": [],
-  "authors": [
-    {
-      "name": "Name Surname",
-      "email": "author@yourmail.org"
-    }
-  ],
-  "docs": {
-    "documentation_url": "https://docs.agentzeroai.com/",
-    "bug_url": "https://github.com/NethServer/dev",
-    "code_url": "https://github.com/author/ns8-agentzeroai"
-  },
-  "source": "ghcr.io/nethserver/agentzeroai"
+	"name": "agentzeroai",
+	"description": {
+		"en": "Free and open source autonomous AI agent.Built as a counterweight to big tech and proprietary AI."
+	},
+	"categories": ["collaboration"],
+	"authors": [
+		{
+			"name": "Genius Dynamics",
+			"email": "support@genius.ke"
+		}
+	],
+	"docs": {
+		"documentation_url": "https://agent-zero.ai/",
+		"bug_url": "https://github.com/geniusdynamics/dev",
+		"code_url": "https://github.com/geniusdynamics/ns8-agentzeroai"
+	},
+	"source": "ghcr.io/geniusdynamics/agentzeroai"
 }
