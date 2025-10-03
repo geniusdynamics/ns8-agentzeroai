@@ -14,7 +14,7 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="agentzeroai"
-
+app_version="v0.9.6"
 # Create a new empty container image
 container=$(buildah from scratch)
 
@@ -45,7 +45,7 @@ buildah config --entrypoint=/ \
     --label="org.nethserver.authorizations=traefik@node:routeadm" \
     --label="org.nethserver.tcp-ports-demand=1" \
     --label="org.nethserver.rootfull=0" \
-    --label="org.nethserver.images=docker.io/agent0ai/agent-zero:v0.9.6" \
+    --label="org.nethserver.images=docker.io/agent0ai/agent-zero:${app_version}" \
     "${container}"
 # Commit the image
 buildah commit "${container}" "${repobase}/${reponame}"
