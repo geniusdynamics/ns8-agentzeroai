@@ -18,7 +18,7 @@ TimeoutStopSec=70
 ExecStartPre=/bin/mkdir -p tmp
 ExecStartPre=/bin/rm -f %t/agentzero-app.pid %t/agentzero-app.ctr-id
 ExecStartPre=-runagent discover-smarthost
-ExecStart=/usr/bin/podman run --conmon-pidfile %t/agentzero-app.pid  --cidfile %t/agentzero-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/agentzeroai.pod-id --replace -d --name  agentzero-app  --volume agentdata:/app/data:Z   --env-file agentzero.env  ${AGENT_ZERO_IMAGE}  
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/agentzero-app.pid  --cidfile %t/agentzero-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/agentzeroai.pod-id --replace -d --name  agentzero-app  --volume agentdata:/app/data:Z --agent_data_a:/a0:Z   --env-file agentzero.env  ${AGENT_ZERO_IMAGE}  
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/agentzero-app.ctr-id -t 10
 ExecReload=/usr/bin/podman kill -s HUP agentzero-app
 SyslogIdentifier=%u

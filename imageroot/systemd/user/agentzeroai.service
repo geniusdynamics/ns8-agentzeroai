@@ -10,8 +10,8 @@
 
 [Unit]
 Description=Podman agentzeroai.service
-Requires=agentzero-app.service 
-Before=agentzero-app.service 
+Requires=agentzero-app.service
+Before=agentzero-app.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
