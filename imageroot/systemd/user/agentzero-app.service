@@ -1,0 +1,30 @@
+#
+# Copyright (C) 2022 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+[Unit]
+Description=Podman  agentzero-app.service
+BindsTo=agentzeroai.service
+After=agentzeroai.service
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+EnvironmentFile=%S/state/environment
+EnvironmentFile=-%S/state/smarthost.env
+WorkingDirectory=%S/state
+Restart=always
+TimeoutStopSec=70
+ExecStartPre=/bin/mkdir -p tmp
+ExecStartPre=/bin/rm -f %t/agentzero-app.pid %t/agentzero-app.ctr-id
+ExecStartPre=-runagent discover-smarthost
+ExecStart=/usr/bin/podman run --conmon-pidfile %t/agentzero-app.pid  --cidfile %t/agentzero-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/agentzeroai.pod-id --replace -d --name  agentzero-app  --volume agentdata:/app/data:Z   --env-file agentzero.env  ${AGENT_ZERO_IMAGE}  
+ExecStop=/usr/bin/podman stop --ignore --cidfile %t/agentzero-app.ctr-id -t 10
+ExecReload=/usr/bin/podman kill -s HUP agentzero-app
+SyslogIdentifier=%u
+ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/agentzero-app.ctr-id
+PIDFile=%t/agentzero-app.pid
+Type=forking
+
+[Install]
+WantedBy=default.target
