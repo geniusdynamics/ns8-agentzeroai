@@ -16,10 +16,10 @@ data = json.load(sys.stdin)
 #This is specific to you module, so you need to change it accordingly.
 #agent.dump_env()
 rdb = agent.redis_connect(use_replica=True)
-ALLOWED_HOSTS = data.get('host')
+ALLOWED_ORIGINS = data.get('host')
  
 agentzero = { 
-"ALLOWED_HOSTS": ALLOWED_HOSTS,
+"ALLOWED_ORIGINS": ALLOWED_ORIGINSS,
 }
 
 agent.write_envfile("agentzero.env", agentzero) 
