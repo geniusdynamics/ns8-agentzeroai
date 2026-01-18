@@ -19,7 +19,7 @@ rdb = agent.redis_connect(use_replica=True)
 ALLOWED_ORIGINS = data.get('host')
  
 agentzero = { 
-"ALLOWED_ORIGINS": ALLOWED_ORIGINSS,
+"ALLOWED_ORIGINS": ALLOWED_ORIGINS,
 }
 
 agent.write_envfile("agentzero.env", agentzero) 
