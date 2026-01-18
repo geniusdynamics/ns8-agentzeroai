@@ -15,7 +15,14 @@ data = json.load(sys.stdin)
 
 #This is specific to you module, so you need to change it accordingly.
 #agent.dump_env()
+rdb = agent.redis_connect(use_replica=True)
+ALLOWED_HOSTS = data.get('host')
  
 agentzero = { 
-} 
+"ALLOWED_HOSTS": ALLOWED_HOSTS,
+}
+
 agent.write_envfile("agentzero.env", agentzero) 
+
+# just before starting systemd unit
+agent.dump_env()
