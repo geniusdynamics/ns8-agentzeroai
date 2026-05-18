@@ -14,7 +14,7 @@ images=()
 repobase="${REPOBASE:-ghcr.io/geniusdynamics}"
 # Configure the image name
 reponame="agentzeroai"
-app_version="v1.14"
+app_version="v1.15"
 # Create a new empty container image
 container=$(buildah from scratch)
 
