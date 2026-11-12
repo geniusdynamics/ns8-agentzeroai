@@ -8,18 +8,23 @@ This module deploys AgentZero AI as a service in NethServer 8, allowing users to
 
 ## Features
 
-- AI-powered agent for automation and assistance
-- Web-based user interface
-- Database integration with MariaDB
-- Automatic SSL certificate management with Let's Encrypt
-- Smarthost configuration discovery
+- Agent Zero autonomous AI agent with its web interface
+- Virtual host routing through Traefik, with optional Let's Encrypt certificate
+- Backup, restore, clone and move of the instance with all its user data
 - Multi-language support via Weblate
 
 ## Requirements
 
-- NethServer 8 core system
-- Docker/Podman for containerization
-- Access to a domain for hosting
+- NethServer 8
+- A host name (FQDN) that resolves to the node
+- An API key for at least one LLM provider, set from the Agent Zero web interface
+
+## Security
+
+Agent Zero runs arbitrary code inside its container and starts **without a
+login**. Right after the first configuration, open the web interface and set a
+user name and password in the *Authentication* section of the Agent Zero settings.
+Until then, anyone who can reach the virtual host controls the agent.
 
 ## Installation
 
@@ -84,15 +89,26 @@ To uninstall the instance:
 
     remove-module --no-preserve agentzeroai1
 
-## Smarthost Setting Discovery
+## Data, backup and update
 
-Some configuration settings, like the smarthost setup, are not part of the `configure-module` action input: they are discovered by looking at some Redis keys. To ensure the module is always up-to-date with the centralized [smarthost setup](https://nethserver.github.io/ns8-core/core/smarthost/) every time agentzeroai starts, the command `bin/discover-smarthost` runs and refreshes the `state/smarthost.env` file with fresh values from Redis.
+Only `/a0/usr` is persistent. It lives in the `agentzero-usr` volume and holds
+the Agent Zero settings, `usr/.env` (API keys, login), chats, memory, projects,
+skills, plugins and the work directory. The rest of `/a0` comes from the
+container image, so `update-module` delivers the new Agent Zero release.
+Update Agent Zero through NethServer, not with the in-app self update: changes
+made by the self update are lost when the container restarts.
 
-Furthermore, if smarthost setup is changed when agentzeroai is already running, the event handler `events/smarthost-changed/10reload_services` restarts the main module service.
+The backup includes the `agentzero-usr` volume. Restore, clone and move bring
+it back and configure the Traefik route again.
 
-See also the `systemd/user/agentzeroai.service` file.
+Module releases up to 2.0.x kept the whole `/a0` directory in the
+`agent_data_a` volume, which froze the Agent Zero code at the first installed
+release. On update, and when restoring a backup taken by such a release,
+`bin/migrate-usr-volume` copies `/a0/usr` of the old volume to
+`agentzero-usr`. The old `agent_data_a` and `agentdata` volumes are left in
+place: once the updated instance works, remove them with
 
-This setting discovery is just an example to understand how the module is expected to work: it can be rewritten or discarded completely.
+    runagent -m agentzeroai1 podman volume rm agent_data_a agentdata
 
 ## Debug
 
@@ -124,53 +140,30 @@ Some CLI commands are needed to debug:
   podman ps
   ```
 
-  Example output:
-
-  ```
-  CONTAINER ID  IMAGE                                      COMMAND               CREATED        STATUS        PORTS                    NAMES
-  d292c6ff28e9  localhost/podman-pause:4.6.1-1702418000                          9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  80b8de25945f-infra
-  d8df02bf6f4a  docker.io/library/mariadb:10.11.5          --character-set-s...  9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  mariadb-app
-  9e58e5bd676f  docker.io/library/nginx:stable-alpine3.17  nginx -g daemon o...  9 minutes ago  Up 9 minutes  127.0.0.1:20015->80/tcp  agentzeroai-app
-  ```
+  The pod runs the `agentzero-app` container, from the
+  `docker.io/agent0ai/agent-zero` image.
 
 - You can see what environment variables are inside the container:
 
   ```
-  podman exec agentzeroai-app env
-  ```
-
-  Example output:
-
-  ```
-  PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-  TERM=xterm
-  PKG_RELEASE=1
-  MARIADB_DB_HOST=127.0.0.1
-  MARIADB_DB_NAME=agentzeroai
-  MARIADB_IMAGE=docker.io/mariadb:10.11.5
-  MARIADB_DB_TYPE=mysql
-  container=podman
-  NGINX_VERSION=1.24.0
-  NJS_VERSION=0.7.12
-  MARIADB_DB_USER=agentzeroai
-  MARIADB_DB_PASSWORD=agentzeroai
-  MARIADB_DB_PORT=3306
-  HOME=/root
+  podman exec agentzero-app env
   ```
 
 - You can run a shell inside the container:
 
   ```
-  podman exec -ti agentzeroai-app sh
+  podman exec -ti agentzero-app bash
   ```
 
 ## Testing
 
-Test the module using the `test-module.sh` script:
-
-    ./test-module.sh <NODE_ADDR> ghcr.io/geniusdynamics/agentzeroai:latest
-
-The tests are made using [Robot Framework](https://robotframework.org/).
+The [Robot Framework](https://robotframework.org/) suite in `tests/` runs on
+GitHub Actions after each image build, on QEMU virtual machines, through the
+shared NethServer
+[test-module-qemu](https://github.com/NethServer/ns8-github-actions/blob/v1/docs/test-module-qemu.md)
+workflow. The `install` scenario tests a clean installation; the `update`
+scenario installs `ghcr.io/geniusdynamics/agentzeroai:latest`, updates it to
+the image under test and checks the user data survived.
 
 ## UI Translation
 

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+# Move user data out of the volume that held the whole /a0 directory.
+# See bin/migrate-usr-volume.
+
+exec 1>&2
+
+exec migrate-usr-volume

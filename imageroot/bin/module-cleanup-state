@@ -4,3 +4,6 @@
 # Copyright (C) 2022 Nethesis S.r.l.
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
+
+# Nothing to do: Agent Zero keeps its data in plain files of the
+# agentzero-usr volume, which Restic backs up as they are.

@@ -5,11 +5,11 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
-# If the control reaches this step, the service can be enabled and started
+# Restart the pod and its container, so the new image and unit files apply
 
 set -e
 
 # Redirect any output to the journal (stderr)
 exec 1>&2
 
-systemctl --user try-restart agentzeroai.service
+systemctl --user try-restart agentzeroai.service agentzero-app.service

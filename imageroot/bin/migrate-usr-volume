@@ -1,0 +1,59 @@
+#!/bin/bash
+
+#
+# Copyright (C) 2026 Nethesis S.r.l.
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+#
+# Module releases up to 2.0.x mounted the whole /a0 directory in the
+# "agent_data_a" volume. That froze the Agent Zero code at the first
+# installed release: update-module pulled the new image, but the old code
+# in the volume kept running. Now only /a0/usr is persistent, in the
+# "agentzero-usr" volume.
+#
+# Copy the user data (/a0/usr) of the old volume to the new one. It runs on
+# update-module and on restore-module, as a backup taken by an old release
+# carries the old volume. The old volumes are left in place: remove them by
+# hand once the new release works. It is a no-op once agentzero-usr exists.
+#
+
+set -e
+exec 1>&2
+
+old_volume=agent_data_a
+new_volume=agentzero-usr
+
+if ! podman volume exists "${old_volume}" || podman volume exists "${new_volume}"; then
+    exit 0
+fi
+
+echo "Migrating Agent Zero user data from volume ${old_volume} to ${new_volume}"
+
+# Stop the app to copy a consistent snapshot of its data
+was_active=0
+if systemctl --user -q is-active agentzeroai.service; then
+    was_active=1
+    systemctl --user stop agentzeroai.service agentzero-app.service
+fi
+
+src=$(podman volume inspect --format '{{.Mountpoint}}' "${old_volume}")
+podman volume create "${new_volume}" >/dev/null
+dst=$(podman volume inspect --format '{{.Mountpoint}}' "${new_volume}")
+
+# On error remove the half-filled volume, so the next run tries again
+trap 'echo "Migration failed, removing ${new_volume}"; podman volume rm -f "${new_volume}" >/dev/null' ERR
+
+if podman unshare test -d "${src}/usr"; then
+    podman unshare cp -a "${src}/usr/." "${dst}/"
+    echo "Copied ${old_volume}/usr to ${new_volume}"
+else
+    echo "No usr/ directory found in ${old_volume}: ${new_volume} starts empty"
+fi
+
+trap - ERR
+
+if [[ ${was_active} == 1 ]]; then
+    systemctl --user daemon-reload
+    systemctl --user start agentzeroai.service
+fi

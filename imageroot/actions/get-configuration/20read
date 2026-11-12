@@ -12,19 +12,12 @@
 import os
 import sys
 import json
-import agent
 
-# Prepare return variable
-config = {}
+config = {
+    "host": os.getenv("TRAEFIK_HOST", ""),
+    # Before the first configure-module, propose the redirection
+    "http2https": os.getenv("TRAEFIK_HTTP2HTTPS", "True") == "True",
+    "lets_encrypt": os.getenv("TRAEFIK_LETS_ENCRYPT") == "True",
+}
 
-# Read current configuration from the environment file
-config["host"] = os.getenv("TRAEFIK_HOST","")
-config["http2https"] = os.getenv("TRAEFIK_HTTP2HTTPS") == "True"
-config["lets_encrypt"] = os.getenv("TRAEFIK_LETS_ENCRYPT") == "True"
-
-# Dump the configuration to stdout
-# json.dump(config, fp=sys.stdout)
-if os.path.exists("agentzero.env"): 
-	data = agent.read_envfile("agentzero.env") 
- 
 json.dump(config, fp=sys.stdout)
