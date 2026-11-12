@@ -4,14 +4,13 @@
 # Copyright (C) 2023 Nethesis S.r.l.
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
+
 set -e
 
 # Redirect any output to the journal (stderr)
 exec 1>&2
 
-# If the control reaches this step, the service can be enabled and started
-
-touch smarthost.env
-
+# If the control reaches this step, the service can be enabled and started.
+# Restart both units: agentzero.env may have changed.
 systemctl --user enable agentzeroai.service
-systemctl --user restart agentzeroai.service
+systemctl --user restart agentzeroai.service agentzero-app.service

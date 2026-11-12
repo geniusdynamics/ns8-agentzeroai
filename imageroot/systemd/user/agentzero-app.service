@@ -3,28 +3,39 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
 
+#
+# Agent Zero container. Only /a0/usr is persistent: it holds settings,
+# usr/.env, chats, memory, projects, skills and the workdir. The rest of
+# /a0 comes from the image, so update-module delivers the new release.
+#
+
 [Unit]
-Description=Podman  agentzero-app.service
+Description=Podman agentzero-app.service
 BindsTo=agentzeroai.service
 After=agentzeroai.service
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
-EnvironmentFile=%S/state/environment
-EnvironmentFile=-%S/state/smarthost.env
-WorkingDirectory=%S/state
+EnvironmentFile=%E/state/environment
+WorkingDirectory=%E/state
 Restart=always
 TimeoutStopSec=70
-ExecStartPre=/bin/mkdir -p tmp
 ExecStartPre=/bin/rm -f %t/agentzero-app.pid %t/agentzero-app.ctr-id
-ExecStartPre=-runagent discover-smarthost
-ExecStart=/usr/bin/podman run --conmon-pidfile %t/agentzero-app.pid  --cidfile %t/agentzero-app.ctr-id --cgroups=no-conmon  --pod-id-file %t/agentzeroai.pod-id --replace -d --name  agentzero-app  --volume agentdata:/app/data:Z --volume agent_data_a:/a0:Z   --env-file agentzero.env  ${AGENT_ZERO_IMAGE}  
+ExecStart=/usr/bin/podman run \
+    --detach \
+    --conmon-pidfile=%t/agentzero-app.pid \
+    --cidfile=%t/agentzero-app.ctr-id \
+    --cgroups=no-conmon \
+    --pod-id-file=%t/agentzeroai.pod-id \
+    --replace --name=%N \
+    --volume=agentzero-usr:/a0/usr:Z \
+    --env-file=agentzero.env \
+    ${AGENT_ZERO_IMAGE}
 ExecStop=/usr/bin/podman stop --ignore --cidfile %t/agentzero-app.ctr-id -t 10
-ExecReload=/usr/bin/podman kill -s HUP agentzero-app
-SyslogIdentifier=%u
 ExecStopPost=/usr/bin/podman rm --ignore -f --cidfile %t/agentzero-app.ctr-id
 PIDFile=%t/agentzero-app.pid
 Type=forking
+SyslogIdentifier=%u
 
 [Install]
 WantedBy=default.target
