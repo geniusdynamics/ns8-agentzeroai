@@ -8,7 +8,7 @@ ${SCENARIO}         install
 # The module is not in a default repository: the update leg starts from
 # the last stable image
 ${STABLE_IMAGE}     ghcr.io/geniusdynamics/agentzeroai:latest
-${HOST}             agentzeroai.example.org
+${HOST}    agentzeroai.example.org
 ${module_id}        ${EMPTY}
 
 *** Keywords ***
@@ -45,7 +45,7 @@ Check if agentzeroai is installed correctly
     Set Global Variable    ${module_id}    ${output.module_id}
 
 Check if agentzeroai can be configured
-    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":false,"lets_encrypt":false}'
+    ${rc} =    Execute Command    api-cli run module/${module_id}/configure-module --data '{"host":"${HOST}","http2https":true,"lets_encrypt":false}'
     ...    return_rc=True  return_stdout=False
     Should Be Equal As Integers    ${rc}  0
 
@@ -65,7 +65,9 @@ Check the module survives the update
     Wait Until Keyword Succeeds    2m    5s    Run in the app container    test -f /a0/usr/ci-marker
 
 Check if agentzeroai works as expected
-    Wait Until Keyword Succeeds    10m    15s    Agent Zero answers on its virtual host
+    ${rc} =    Execute Command    bash -c 'for i in $(seq 1 60); do curl -k -s -o /dev/null -f --resolve ${HOST}:443:127.0.0.1 https://${HOST}/ && exit 0; sleep 5; done; exit 1'
+    ...    return_rc=True  return_stdout=False
+    Should Be Equal As Integers    ${rc}  0
 
 Take screenshots
     [Tags]    ui
